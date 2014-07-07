@@ -1,9 +1,10 @@
 #
+# Author:: Manas Alekar
 # Author:: Bao Nguyen <ngqbao@gmail.com>
 # Cookbook Name:: cumulus-linux
 # Library:: ports
 #
-# Copyright 2014, Bao Nguyen
+# Copyright 2014, Ooyala
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
