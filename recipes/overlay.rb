@@ -20,81 +20,18 @@
 
 # "build" a cumulus switch overlay on a standard Debian system
 
-interfaces = Cumulus::AS6701_32X::Ports.new()
+#::Chef::Recipe.send(:include, Cumulus)
 
-(21..24).each do |i|
-  interfaces.set_10G(i)
-end
+case node.cumulus.model
+when "AS6701_32X"
+  conf = Cumulus::SwitchConfig.new(Accton::AS6701_32X::X_pipeline,Accton::AS6701_32X::Y_pipeline)
 
-directory "/etc/cumulus" do
-  owner "root"
-  group "root"
-  mode "0755"
-  action :create
-end
-
-# read and create the port mapping
-template "/etc/cumulus/ports.conf" do
-  source "ports.conf.erb"
-  owner "root"
-  group "root"
-  mode "0644"
-  variables(
-    ports: interfaces.ports,
-    x_pipline: interfaces.get_x,
-    y_pipeline: interfaces.get_y
-  )
-end
-
-# build the "physical" interfaces
-execute "dummy" do
-  command "modprobe dummy numdummies=#{interfaces.ports.length}"
-  action :run
-end
-
-# TODO: convert to chef HWRP
-#ip_link "swp1" do
-#  dev "dummy0"
-#  action :add
-#  status :up
-#  type :dummy
-#end
-
-# simulating front panel ports
-(0..interfaces.ports.length-1).each do |i|
-  execute "links" do
-    command "/sbin/ip link set name swp#{i} dev dummy#{i}"
-    action :run
-    not_if "/sbin/ip link show swp#{i}"
+  (21..24).each do |i|
+    Chef::Log.info conf[i]
+    conf[i].set1x40g
   end
-end
 
-# only needed to simulate switchd daemon
-gem_package "daemons"
-
-# start the fake "switchd"
-template "/etc/init.d/switchd" do
-  source "switchd.conf.init.erb"
-  owner "root"
-  group "root"
-  mode "0755"
-end
-
-template "usr/sbin/switchd_control.rb" do
-  source "switchd_control.rb.erb"
-  owner "root"
-  group "root"
-  mode "0644"
-end
-
-template "/usr/sbin/switchd.rb" do
-  source "switchd.rb.erb"
-  owner "root"
-  group "root"
-  mode "0755"
-end
-
-service "switchd" do
-  supports :status => false, :restart => true, :reload => false
-  action [ :start ]
+  cumulus_linux_overlay "AS6701_32X" do
+    hardware conf
+  end
 end

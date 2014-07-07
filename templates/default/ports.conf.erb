@@ -1,9 +1,4 @@
-# X pipeline
-<% @x_pipline.each do |i| -%>
-<%= i %>=<%= @ports[i] %>
-<% end -%>
-
-# Y pipeline
-<% @y_pipeline.each do |i| -%>
-<%= i %>=<%= @ports[i] %>
+# X and Y pipelines
+<% @ports.each do |port,pipeline| -%>
+<%= port %>=<%= pipeline %>
 <% end -%>

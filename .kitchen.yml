@@ -18,5 +18,9 @@ suites:
 - name: default
   data_bags_path: <%= "#{ENV['WORKSPACE']}/chef/chef-repo/data_bags" %>
   run_list:
-    - recipe[ooyala-cumulus-linux::overlay]
+    - recipe[cumulus-linux::overlay]
+- name: ports
+  data_bags_path: <%= "#{ENV['WORKSPACE']}/chef/chef-repo/data_bags" %>
+  run_list:
+    - recipe[cumulus-linux::test_ports]
   attributes:
