@@ -48,22 +48,23 @@ module Cumulus
       @ports[n]
     end
 
-    def port(n)
-      @ports.each do |x|
-        if x.id == n
-          @ports[n]
-        end
+    def front_panel_port(n)
+      if c = @ports.select{ |c| c.id == n }
+        puts "found: #{c}"
+        c.first
+      else
+        puts "not found"
       end
-    end
+   end
 
-    def nports
+    def ports
       @ports.inject(0) { |acc, p| acc + p.nports }
     end
 
     def from_json
     end
 
-    def to_pipeline
+    def pipelines
       ret = {}
       @ports.each do |n|
         ret[n.id] = n.pipeline
@@ -71,7 +72,7 @@ module Cumulus
       ret
     end
 
-    def to_ports
+    def modes
       ret = {}
       @ports.each do |n|
         ret[n.id] = n.mode
@@ -88,6 +89,7 @@ module Cumulus
 
     attr_accessor :pipeline
     attr_accessor :id
+    attr_accessor :mode
 
     def initialize(id, pipeline)
       @id       = id
@@ -104,8 +106,9 @@ module Cumulus
     def set4x10g
       @mode  = :c4x10g
       @unit = []
-      4.times do
-        @unit << PortUnit.new
+      4.times do |i|
+        # start counting at 0
+        @unit << PortUnit.new(i)
       end
     end
 
@@ -124,8 +127,8 @@ module Cumulus
         }
       else
         ret = {}
-        0.upto(3) do |n|
-          ret["swp#{@id}s#{n}"] = @unit[n].serialize
+        @unit.each do |n|
+          ret["swp#{@id}s#{n.id}"] = n.serialize
         end
         ret
       end
@@ -138,13 +141,15 @@ module Cumulus
 
   class PortUnit
     attr_accessor :ip
+    attr_accessor :id
 
-    def initialize
+    def initialize(id=nil)
       @state = :up
+      @id = id
     end
 
     def serialize
-      { :state => @state }
+      { :id => @id, :state => @state  }
     end
 
     def deserialize
@@ -154,16 +159,32 @@ end
 
 if __FILE__ == $0
   conf = Cumulus::SwitchConfig.new(Accton::AS6701_32X::X_pipeline,Accton::AS6701_32X::Y_pipeline)
+  puts conf.ports
   conf[0].set4x10g
-  puts conf.to_json
+  puts conf[10]
+  puts conf[10].serialize
 
   (0..5).each do |i|
     puts "#{i} - #{conf[i].id}:#{conf[i].pipeline}"
   end
 
-  puts conf.to_pipeline
+  puts conf.pipelines
 
-  puts conf.to_ports
+  puts conf.modes
 
-  puts conf.nports
+  puts conf.ports
+  puts "select: #{conf.front_panel_port(1)}"
+  puts "result: #{conf.front_panel_port(1).mode}"
+  conf.front_panel_port(1).set4x10g
+  conf.front_panel_port(2).set4x10g
+  puts conf.front_panel_port(2).mode
+  puts conf.ports
+
+  puts conf.to_json
+
+  a = Cumulus::PortConfig.new(10, "x")
+  puts a.mode
+
+  a.set4x10g
+  puts a.mode
 end
